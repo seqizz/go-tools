@@ -7,4 +7,6 @@ Collection of tools I've written in golang
 
 - **mprun**: Miserable parallel script runner
 
+- **sshit**: Parallel ssh runner with config file support
+
 - **wwn**: Shows FC wwn's of a Linux system
