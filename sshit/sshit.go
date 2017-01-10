@@ -1,5 +1,7 @@
 package main
 
+// gurkan.in | license: Apache License 2.0 shared on https://github.com/seqizz/go-tools/blob/master/LICENSE
+
 import (
 	"errors"
 	"flag"
