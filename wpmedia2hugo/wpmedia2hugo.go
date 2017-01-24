@@ -68,7 +68,7 @@ func main() {
 			}
 			if len(findContent) != 0 {
 				wantedContent := findContent[len(findContent)-1]
-				isImage, _ := regexp.MatchString(".*(gif|jpg|jpeg|png)\\?.*$", wantedContent)
+				isImage, _ := regexp.MatchString(".*(gif|jpg|jpeg|png)\\??.*$", wantedContent)
 				if isImage {
 					re := regexp.MustCompile(".*(gif|jpg|jpeg|png)")
 					realImg := re.FindString(wantedContent)
