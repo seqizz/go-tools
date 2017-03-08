@@ -20,33 +20,39 @@ import (
 	"github.com/spf13/viper"
 )
 
+var work string
 var runslice []string
 var f *os.File
 var err error
 var parallel int
 var noWrite = false
 var isVerbose = false
+var isScript = false
 
 //Variables , why not struct
 type Variables struct {
-	server  string
-	command string
-	config  *viper.Viper
-	bar     *pb.ProgressBar
-	file    *os.File
-	auth    []ssh.AuthMethod
+	server string
+	work   string
+	config *viper.Viper
+	bar    *pb.ProgressBar
+	file   *os.File
+	auth   []ssh.AuthMethod
 }
 
 func main() {
-	configFile := flag.String("config", "config.yaml", "Configuration file to use")
+	configFile := flag.String("config", "/home/gurkan/go/sshit/config.yaml", "Configuration file to use")
 	serverName := flag.String("server", "", "Server or server group to run commands on")
-	commandToRun := flag.String("command", "", "Command to run")
+	commandToRun := flag.String("command", "", "Command to run on remote server(s)")
+	scriptToRun := flag.String("script", "", "Script to run on remote server(s)")
 	outputFlag := flag.String("output", "", "Result file to write all responses/errors")
 	timeoutFlag := flag.Int("timeout", 0, "Maximum allowed time for running the command")
 	showNewConfig := flag.Bool("C", false, "Show a config file example")
 	flag.Parse()
 
 	conf := viper.New()
+	if !CheckIfFileExists(*configFile) {
+		sendError("config file")
+	}
 	conf.SetConfigFile(*configFile)
 	err := conf.ReadInConfig()
 	if err != nil {
@@ -110,8 +116,18 @@ func main() {
 	}
 
 	// Is there a command?
-	if *commandToRun == "" {
-		sendError("command")
+	if *commandToRun == "" && *scriptToRun == "" {
+		sendError("command or script")
+	} else {
+		if *commandToRun != "" && *scriptToRun != "" {
+			sendError("single thing; command and script can't be used at the same time.")
+		}
+		if *commandToRun != "" {
+			work = *commandToRun
+		} else {
+			work = *scriptToRun
+			isScript = true
+		}
 	}
 
 	//Configure the status bar
@@ -128,12 +144,12 @@ func main() {
 			defer wg.Done()
 			for server := range s {
 				mySet := &Variables{
-					server:  server,
-					command: *commandToRun,
-					config:  conf,
-					bar:     nil,
-					file:    f,
-					auth:    []ssh.AuthMethod{PublicKeyFile(conf.GetString("sshkey"))},
+					server: server,
+					work:   work,
+					config: conf,
+					bar:    nil,
+					file:   f,
+					auth:   []ssh.AuthMethod{PublicKeyFile(conf.GetString("sshkey"))},
 				}
 				if isVerbose {
 					response, err := checkTimeout(mySet, time.Duration(int64(*timeoutFlag)))
@@ -184,7 +200,7 @@ func runCommand(set *Variables) (response string, err error) {
 
 	var answer []byte
 
-	answer, err = session.Output(set.command)
+	answer, err = session.Output(set.work)
 	if err != nil {
 		if !noWrite {
 			_, writeErr := set.file.WriteString("ERROR : " + set.server + " : " + err.Error() + "\n")
@@ -252,8 +268,21 @@ func checkTimeout(set *Variables, timeout time.Duration) (response string, err e
 	}
 }
 
+//CheckIfFileExists checks the file is present on the disk
+func CheckIfFileExists(filePath string) bool {
+	if _, err := os.Stat(filePath); err == nil {
+		return true
+	}
+	return false
+}
+
 //PublicKeyFile is reading file and shitting as AuthMethod
 func PublicKeyFile(file string) ssh.AuthMethod {
+
+	if !CheckIfFileExists(file) {
+		sendError("valid public key path")
+	}
+
 	buffer, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil
