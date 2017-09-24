@@ -161,7 +161,7 @@ func calculate(myMap map[string]int64, curLevel int, isDone bool, number int) (i
 func isSliceContainsRgx(slice []string, text string) bool {
 	for _, a := range slice {
 		a = strings.Replace(a, "(", "\\(", -1)
-		a = strings.Replace(a, ")", "\\)", -1
+		a = strings.Replace(a, ")", "\\)", -1)
 		a = strings.Replace(a, "[", "\\[", -1)
 		a = strings.Replace(a, "]", "\\]", -1)
 		matched, _ := regexp.MatchString(a+".*", text)
