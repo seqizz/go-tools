@@ -9,6 +9,8 @@ Collection of tools I've written in golang
 
 - **sshit**: Parallel ssh runner with config file support
 
+- **watchy**: A simple "watch -n" like tool, with instant-refresh support
+
 - **wwn**: Shows FC wwn's of a Linux system
 
 - **wpmedia2hugo**: A helper program for parsing a wordpress blog's xml output to Hugo markdown
